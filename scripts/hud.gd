@@ -10,11 +10,12 @@ signal drop_pressed
 signal pause_pressed
 
 const PreviewScript := preload("res://scripts/piece_preview.gd")
+const IconScript := preload("res://scripts/icon.gd")
 const INK := Color("1b2a44")
 
 var height_label: Label
 var best_label: Label
-var hearts_label: Label
+var hearts: Control
 var zone_label: Label
 var wind_label: Label
 var piece_label: Label
@@ -50,16 +51,22 @@ func _ready() -> void:
 	height_label = _label("0 m", 72)
 	best_label = _label("Best 0 m", 26)
 	zone_label = _label("Meadow", 30)
-	hearts_label = _label("", 40, Color("ff5d73"))
 	wind_label = _label("", 28)
-	for l in [height_label, best_label, zone_label, hearts_label, wind_label]:
+	for l in [height_label, best_label, zone_label]:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		left.add_child(l)
+	hearts = IconScript.new()
+	hearts.kind = "hearts"
+	hearts.custom_minimum_size = Vector2(260, 46)
+	hearts.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left.add_child(hearts)
+	wind_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	left.add_child(wind_label)
 
 	var right := VBoxContainer.new()
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(right)
-	var pause_btn := _button("II", 28)
+	var pause_btn := _icon_button("pause")
 	pause_btn.custom_minimum_size = Vector2(72, 72)
 	pause_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
 	pause_btn.focus_mode = Control.FOCUS_NONE
@@ -104,23 +111,23 @@ func _ready() -> void:
 	controls.alignment = BoxContainer.ALIGNMENT_CENTER
 	controls.add_theme_constant_override("separation", 12)
 	root.add_child(controls)
-	var hold_btn := func(text: String, dir: int) -> Button:
-		var b := _button(text, 40)
+	var hold_btn := func(icon: String, dir: int) -> Button:
+		var b := _icon_button(icon)
 		b.button_down.connect(func() -> void: move_held.emit(dir, true))
 		b.button_up.connect(func() -> void: move_held.emit(dir, false))
 		return b
-	controls.add_child(hold_btn.call("◀", -1))
-	var rl := _button("⟲", 40)
+	controls.add_child(hold_btn.call("left", -1))
+	var rl := _icon_button("ccw")
 	rl.pressed.connect(func() -> void: rotate_pressed.emit(-1))
 	controls.add_child(rl)
 	var drop := _button("DROP", 34, Color("ff9f43"))
 	drop.custom_minimum_size.x = 170
 	drop.pressed.connect(func() -> void: drop_pressed.emit())
 	controls.add_child(drop)
-	var rr := _button("⟳", 40)
+	var rr := _icon_button("cw")
 	rr.pressed.connect(func() -> void: rotate_pressed.emit(1))
 	controls.add_child(rr)
-	controls.add_child(hold_btn.call("▶", 1))
+	controls.add_child(hold_btn.call("right", 1))
 	for b in controls.get_children():
 		(b as Button).focus_mode = Control.FOCUS_NONE
 		if (b as Button).custom_minimum_size.x < 100:
@@ -136,10 +143,10 @@ func _ready() -> void:
 func update_stats(height_m: float, peak_m: float, best_m: float, lives: int, zone: String, wind: float) -> void:
 	height_label.text = "%d m" % int(round(height_m))
 	best_label.text = "Peak %d m   ·   Record %d m" % [int(round(peak_m)), int(round(best_m))]
-	hearts_label.text = "♥".repeat(maxi(lives, 0))
+	hearts.count = maxi(lives, 0)
 	zone_label.text = zone
 	if absf(wind) > 0.05:
-		var arrow := "→" if wind > 0 else "←"
+		var arrow := ">" if wind > 0 else "<"
 		wind_label.text = "Wind " + arrow.repeat(clampi(int(absf(wind) * 3.0) + 1, 1, 3))
 	else:
 		wind_label.text = ""
@@ -184,7 +191,7 @@ func show_title(best_m: float) -> void:
 	v.add_child(_label("SKY STACK", 92, Color.WHITE, 16))
 	v.add_child(_label("How high can you build?", 32))
 	v.add_child(_spacer(10))
-	v.add_child(_label("◀ ▶ / A D / mouse   move the crane\nQ E / wheel   rotate\nSpace / click   drop", 24))
+	v.add_child(_label("Arrows / A D / mouse   move the crane\nQ E / wheel   rotate\nSpace / click   drop", 24))
 	v.add_child(_label("Drop 3 pieces off the island and it's over.\nEach new sky zone gives back a heart.", 24))
 	if best_m > 0:
 		v.add_child(_label("Record: %d m" % int(round(best_m)), 34, Color("fff3b0")))
@@ -271,6 +278,17 @@ func _label(text: String, font_size: int, color := Color.WHITE, outline := 8) ->
 	l.add_theme_constant_override("outline_size", outline)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return l
+
+
+func _icon_button(icon: String) -> Button:
+	var b := _button("", 20)
+	b.custom_minimum_size = Vector2(72, 72)
+	var ic := IconScript.new()
+	ic.kind = icon
+	ic.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(ic)
+	return b
 
 
 func _button(text: String, font_size: int, color := Color("3d5a80")) -> Button:

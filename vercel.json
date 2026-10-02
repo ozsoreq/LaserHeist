@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo 'No install: the Godot web export is prebuilt'",
+  "buildCommand": "echo 'No build: serving build/web'",
+  "outputDirectory": "build/web",
+  "headers": [
+    {
+      "source": "/(.*)\\.(wasm|pck)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+    }
+  ]
+}

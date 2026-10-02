@@ -94,9 +94,22 @@ display:
 godot --rendering-driver opengl3 res://tests/screenshots.tscn -- out=/tmp/shots
 ```
 
-## Exporting
+## Web build and Vercel
+
+A ready-to-serve Web export lives in `build/web/`, and the root `vercel.json`
+points Vercel at it. To deploy, import this repository into Vercel and keep the
+defaults. Every push redeploys.
+
+After changing the game, rebuild the export, then commit and push it:
+
+```bash
+godot --headless --export-release "Web" build/web/index.html
+```
+
+The export uses the preset in `export_presets.cfg`. Thread Support is off, so
+no special server headers are needed.
+
+## Other exports
 
 Use **Project → Export** in the editor. Install the 4.7.1 export templates
-when Godot asks, then add a preset for Web, Windows, macOS, Linux or Android.
-The project uses the Compatibility renderer, so the Web export works in any
-WebGL 2 browser.
+when Godot asks, then add a preset for Windows, macOS, Linux or Android.
